@@ -13,7 +13,6 @@ return {
     {
         "jesses-code-adventures/dotenv.nvim",
         config = function()
-            vim.opt.runtimepath:append(vim.fn.expand(path))
             require("dotenv").setup()
         end,
         lazy=false
@@ -28,7 +27,6 @@ return {
     {
         "jesses-code-adventures/dotenv.nvim",
         config = function()
-            vim.opt.runtimepath:append(vim.fn.expand(path))
             require("dotenv").setup({
                 env_path="~/.config/nvim/.custom_env_file" -- this could be any file path
             })
