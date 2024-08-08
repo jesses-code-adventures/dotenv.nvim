@@ -36,6 +36,12 @@ return {
 }
 ```
 
+you can verify your variables are now available by echoing them as a neovim cmd.
+
+```vim
+:echo $MY_ENV_VAR
+```
+
 ## formatting
 
 if your .env file is incorrectly formatted, this plugin will throw early.
