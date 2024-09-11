@@ -22,6 +22,7 @@ end
 
 function M.setup(opts)
     local env_file = opts and opts.env_path and vim.fn.expand(opts.env_path) or vim.fn.stdpath("config") .. "/.env"
+    local raise_errors = opts and opts.raise_errors or true
     local file = io.open(env_file, "r")
     if not file then
       error("Couldn't locate a .env file in your nvim config when searching: " .. env_file)
@@ -31,12 +32,16 @@ function M.setup(opts)
             goto continue
         end
         local parts = {split_first(line, "=")}
-        if #parts < 2 then
+        if #parts < 2 and raise_errors then
             error("Incorrectly formatted line in .env file: " .. line)
+        elseif not raise_errors then
+            goto continue
         end
         local key, value = split_first(line, "=")
         if not value then
             error("Value is nil for line: " .. line)
+        elseif not raise_errors then
+            goto continue
         end
         value = parse_value(value)
         vim.fn.setenv(key, value)
