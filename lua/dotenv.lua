@@ -15,13 +15,10 @@ local function parse_value(value)
     if (value:sub(1, 1) == '"' and value:sub(-1) == '"') or
        (value:sub(1, 1) == "'" and value:sub(-1) == "'") then
         value = value:sub(2, -2)
-    else
-        if value:find("=") then
-            error("Unquoted value contains an '=' sign: " .. value)
-        end
     end
     return value
 end
+
 
 function M.setup(opts)
     local env_file = opts and opts.env_path and vim.fn.expand(opts.env_path) or vim.fn.stdpath("config") .. "/.env"
@@ -30,7 +27,7 @@ function M.setup(opts)
       error("Couldn't locate a .env file in your nvim config when searching: " .. env_file)
     end
     for line in file:lines() do
-        if line == "" or line == nil then
+        if line == "" or line == nil or line:match("^%s*#") then
             goto continue
         end
         local parts = {split_first(line, "=")}
