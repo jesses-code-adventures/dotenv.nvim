@@ -1,51 +1,45 @@
 local M = {}
 
-local function split_first(s, delimiter)
-    local delimiter_pos = string.find(s, delimiter, 1, true)
-    if not delimiter_pos then
-        return s
-    end
-    local key = string.sub(s, 1, delimiter_pos - 1)
-    local value = string.sub(s, delimiter_pos + 1)
+local function parse_line(line)
+    local key, value = line:match("^%s*([%w_]+)%s*=%s*(.*)%s*$")
+    if not key or not value then return nil, nil end
+    value = value:gsub('^["\'](.-)["\']$', "%1")
     return key, value
 end
 
-local function parse_value(value)
-    value = value:match("^%s*(.-)%s*$")
-    if (value:sub(1, 1) == '"' and value:sub(-1) == '"') or
-       (value:sub(1, 1) == "'" and value:sub(-1) == "'") then
-        value = value:sub(2, -2)
-    else
-        if value:find("=") then
-            error("Unquoted value contains an '=' sign: " .. value)
+local function load_env_file(filepath)
+    local env_vars = {}
+    local file = io.open(filepath, "r")
+    if not file then return env_vars end
+
+    for line in file:lines() do
+        local key, value = parse_line(line)
+        if key and value then
+            env_vars[key] = value
         end
     end
-    return value
+    file:close()
+    return env_vars
+end
+
+local function merge_envs(base_env, override_env)
+    for key, value in pairs(override_env) do
+        base_env[key] = value
+    end
 end
 
 function M.setup(opts)
-    local env_file = opts and opts.env_path and vim.fn.expand(opts.env_path) or vim.fn.stdpath("config") .. "/.env"
-    local file = io.open(env_file, "r")
-    if not file then
-      error("Couldn't locate a .env file in your nvim config when searching: " .. env_file)
+    local cwd = vim.loop.cwd()
+    local env_files = opts.overrides or { ".env" }
+    local final_env = {}
+    for _, file in ipairs(env_files) do
+        local filepath = cwd .. "/" .. file
+        local env_vars = load_env_file(filepath)
+        merge_envs(final_env, env_vars)
     end
-    for line in file:lines() do
-        if line == "" or line == nil then
-            goto continue
-        end
-        local parts = {split_first(line, "=")}
-        if #parts < 2 then
-            error("Incorrectly formatted line in .env file: " .. line)
-        end
-        local key, value = split_first(line, "=")
-        if not value then
-            error("Value is nil for line: " .. line)
-        end
-        value = parse_value(value)
+    for key, value in pairs(final_env) do
         vim.fn.setenv(key, value)
-        ::continue::
     end
-    file:close()
 end
 
 return M
