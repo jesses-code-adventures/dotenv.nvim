@@ -28,6 +28,7 @@ local function merge_envs(base_env, override_env)
     end
 end
 
+
 function M.setup(opts)
     local cwd = vim.loop.cwd()
     local env_files = opts.overrides or { ".env" }
